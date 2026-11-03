@@ -1,0 +1,23 @@
+name = "queens_lean"
+version = "0.1.0"
+keywords = ["math"]
+defaultTargets = ["QueensLean"]
+
+[leanOptions]
+pp.unicode.fun = true # pretty-prints `fun a ↦ b`
+relaxedAutoImplicit = false
+weak.linter.mathlibStandardSet = true
+maxSynthPendingDepth = 3
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "v4.36.0-rc1"
+
+[[lean_lib]]
+name = "QueensLean"
+
+# The two exhaustive searches inside the kernel (Corollary 19 at n = 10 and 13). Not built by default:
+# `lake build QueensLeanHeavy` needs about 21 GB of memory (C(10)) and about 10 h on one core (C(13)).
+[[lean_lib]]
+name = "QueensLeanHeavy"
