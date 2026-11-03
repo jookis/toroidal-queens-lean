@@ -1,5 +1,7 @@
 # toroidal-queens-lean
 
+[![build and check](https://github.com/jookis/toroidal-queens-lean/actions/workflows/build.yml/badge.svg)](https://github.com/jookis/toroidal-queens-lean/actions/workflows/build.yml)
+
 Lean 4 proofs (with mathlib) for the papers on toroidal conflicts of n-queens solutions by Jouko Kines.
 
 On an n x n board whose edges wrap around (a torus), the queens of an ordinary n-queens solution can still meet on the

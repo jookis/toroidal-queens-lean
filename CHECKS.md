@@ -5,6 +5,8 @@ pipeline on the v4 bundle (sources byte-identical to tag `paper1-v4`).
 
 | Date | Code | Checker (version) | Covered | Result |
 |---|---|---|---|---|
+| 2026-11-03 | main with the mathlib style linter off (lakefile only), clean copy | Lean kernel, `scripts/check.sh`, leanchecker | `lake build` 642 s, 0 style warnings, 0 errors; 118 theorems; 22 modules | PASS, standard axioms only |
+| 2026-11-03 | main df2438f, GitHub Actions (ubuntu-latest, mathlib from cache.mathlib.org) | Lean kernel, `scripts/check.sh`, leanchecker | `lake build`; trust checks; 22 modules | PASS (green run, reported by the author) |
 | 2026-11-03 | this repo before its first push (paper1-v4 plus Spec, Paths), clean copy, mathlib from pinned revs | Lean kernel (v4.36.0-rc1) | `lake build` (QueensLean, SecondLean), 642 s | PASS |
 | 2026-11-03 | same | `scripts/check.sh` (leankit) | 157 source files; axioms of 118 theorems; 37 theorems of the main files listed; 10 spec board values recomputed | PASS, standard axioms only; controls (a `sorry` file, a wrong board count) fail as they should |
 | 2026-11-03 | same | leanchecker (toolchain) | 22 modules of QueensLean and SecondLean (import-only roots skipped) | PASS 22/22 |
