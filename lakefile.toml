@@ -1,7 +1,7 @@
 name = "queens_lean"
 version = "0.1.0"
 keywords = ["math"]
-defaultTargets = ["QueensLean"]
+defaultTargets = ["QueensLean", "SecondLean"]
 
 [leanOptions]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
@@ -21,3 +21,8 @@ name = "QueensLean"
 # `lake build QueensLeanHeavy` needs about 21 GB of memory (C(10)) and about 10 h on one core (C(13)).
 [[lean_lib]]
 name = "QueensLeanHeavy"
+
+# The plain-definition specification of paper 1 (Spec) and Theorem 5 in full (Paths), cited by paper 2 under these
+# names. Paper 2's own files join this library at the paper-2 release.
+[[lean_lib]]
+name = "SecondLean"

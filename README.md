@@ -1,81 +1,70 @@
-# Lean 4 proofs
+# toroidal-queens-lean
 
-Formal proofs, in Lean 4 with mathlib, of all the theorems of "The fewest and the most toroidal conflicts of an
-n-queens solution". Every theorem below is proved from the definitions alone, with no `sorry`; `#print axioms`
-gives only the three standard axioms `propext`, `Classical.choice`, `Quot.sound` for each.
+Lean 4 proofs (with mathlib) for the papers on toroidal conflicts of n-queens solutions by Jouko Kines.
+
+On an n x n board whose edges wrap around (a torus), the queens of an ordinary n-queens solution can still meet on the
+wrapped diagonals. These files prove, from the definitions alone, what the fewest and the most such conflicts are.
+No `sorry`; every listed theorem uses only the three standard axioms `propext`, `Classical.choice`, `Quot.sound`.
 
 ## Start here
 
-`QueensLean/MainResults.lean` restates every main result of the paper with the definitions it uses; each proof is one
-reference to the module theorem. That file (and `QueensLeanHeavy/MainResultsHeavy.lean` for C(10) and C(13)) is what
-to compare with the paper; everything else is checked by Lean.
+`SecondLean/Spec.lean` is the file to read. It defines everything again straight from the board, with no encodings:
+
+- a board is `f : Fin n → Fin n` (row i holds a queen in column f i);
+- a solution: no two queens share a column, and `|i - j| ≠ |f i - f j|` for any two rows;
+- the wrapped diagonals of a queen are `(i + f i) mod n` and `(i + n - f i) mod n`;
+- a conflict is a pair of queens on the same wrapped diagonal.
+
+It then proves these definitions equal to the compact ones the proofs use (`isSolution_iff`, `confSpec_eq`,
+`graphSpec_eq`), restates the main results with the plain definitions only (`floor`, `levels`, `union_of_paths`,
+`golden_ceiling`), and checks them on explicit boards (n = 4, 5, 6 and the n = 26 board of the paper, plus two
+boards that must fail). A reader who trusts these lines can leave the rest to the checkers.
+
+## Papers
+
+| Paper | Lean | Tag | Archived bundle |
+|---|---|---|---|
+| The fewest and the most toroidal conflicts of an n-queens solution (v4) | `QueensLean`, `QueensLeanHeavy` | `paper1-v4` | Zenodo [10.5281/zenodo.23755751](https://doi.org/10.5281/zenodo.23755751) |
+| Specification of paper 1 and its Theorem 5 in full | `SecondLean/Spec.lean`, `SecondLean/Paths.lean` | (after `paper1-v4`) | with paper 2 |
+| Paper 2 (in preparation) | `SecondLean` | at its release | at its release |
+
+Each tag is the exact code its paper cites. The Zenodo bundles also hold the Python computations, data and boards,
+which are not repeated here. `docs/paper1-bundle-README.md` is paper 1's Lean README from its bundle (its relative
+paths point into that bundle), with the full paper-to-Lean table.
+
+## Main results of paper 1 in Lean
+
+| Paper | Lean |
+|---|---|
+| Theorem 2: the fewest conflicts is exactly 0, 2 or 3 | `Construct.floor_exact`; plain form `SecondLean.Spec.floor` |
+| Theorem 3: never 1; never 2 at prime n ≥ 5; never 3 at n = 2q | `Levels.levels`; plain form `SecondLean.Spec.levels` |
+| Theorem 4: balanced modulo every prime K ≥ 5 dividing n | `Layer.layer`, `Layer.layer_even` |
+| Theorem 5: the conflict graph is a union of paths | `NoCycles.acyclic`, `SecondLean.Paths.union_of_paths`; plain form `SecondLean.Spec.union_of_paths` |
+| Theorem 17: at most floor(n/φ) conflicts | `Golden.golden_ceiling`; plain form `SecondLean.Spec.golden_ceiling` |
+| Corollary 19: exact maxima at the listed sizes (C(10) = 5 and C(13) = 7 by kernel searches) | `Ceilings.C_n`, `CeilingsRouteA`, `QueensLeanHeavy` |
+
+`QueensLean/MainResults.lean` restates every result of paper 1 in its own notation.
 
 ## Build
 
-Toolchain `leanprover/lean4:v4.36.0-rc1` (file `lean-toolchain`), mathlib at commit
-`625d8914199bc567cca9b91f90e8e5afafa5ae51` (tag v4.36.0-rc1, pinned in `lake-manifest.json`). With `elan` installed:
+Toolchain `leanprover/lean4:v4.36.0-rc1`, mathlib at tag v4.36.0-rc1 (pinned in `lake-manifest.json`).
 
-    lake exe cache get          # downloads the precompiled mathlib (several GB)
-    lake build                  # the default library QueensLean: every result except C(10) and C(13); FloorFamilies.lean
-                                # alone takes about 8 minutes, Ceilings.lean several more
-    lake build QueensLeanHeavy  # optional: the exhaustive searches for C(10) (about 21 GB of memory) and C(13)
-                                # (132 files, about 10 h on one core, up to 8 GB each)
+    lake exe cache get          # precompiled mathlib (several GB)
+    lake build                  # QueensLean and SecondLean (about 20 minutes)
+    lake build QueensLeanHeavy  # optional: C(10) needs about 21 GB of memory, C(13) about 10 h on one core
 
-Then `#print axioms <name>` for any theorem below (for example in a scratch file that imports `QueensLean`), and
-`lake env leanchecker <Module>` to replay a module through the kernel again.
+## Checks
 
-## Layout
+| Check | What it confirms | How to run | When |
+|---|---|---|---|
+| Lean kernel | every proof, during the build | `lake build` | every push (GitHub Actions) |
+| Trust checks (`scripts/leankit.py`) | no `sorry`, `admit`, `native_decide`, `axiom`, `unsafe` in the sources; only the three standard axioms for every theorem in `scripts/theorems.txt`; every theorem of the main files listed; the spec's sanity boards recomputed by an independent Python version (`scripts/plugins/queens.py`) | `scripts/check.sh` | every push |
+| leanchecker | Lean's kernel replays every compiled module from scratch | `scripts/recheck.sh leanchecker` | every push |
+| nanoda | an independent type checker written in Rust checks an export (lean4export) of each theorem and everything it uses, with only the three standard axioms permitted | `scripts/recheck.sh nanoda` | at each tag, by hand |
 
-- `QueensLean.lean`, `QueensLean/`: the default library.
-- `QueensLeanHeavy.lean`, `QueensLeanHeavy/`: the two kernel searches (not built by default).
-- `tools/`: the Python generators of the four generated files (`Ceilings.lean` and `CeilingsRouteA.lean` from the
-  board files in `../data/` by `export_boards.py`; `FloorFamilies.lean` by `floor_families_gen.py` with
-  `construct_gen.py` and `families.json`; `QueensLeanHeavy/MissC13.lean` and `Miss13/` by `miss13_gen.py`), and
-  `check_floor_independent.py`, a second check of the floor families with no Monsky code. The author's release pipeline (not shipped) reruns
-  every generator and requires byte-identical files.
+The checkers are the toolchain's own binaries (nanoda 0.4.17, lean4export 3.1.0 for the runs recorded so far); they
+are referenced, not copied. `CHECKS.md` records every run: date, tag, checker, version, what was covered, result.
 
-Three comments in the Lean files are out of date (left unchanged so that the checked files stay byte-identical):
-`QueensLean/FloorAll.lean` names `lean/export/construct_gen.py` (now `tools/construct_gen.py`);
-`QueensLean/LevelsControls.lean` names `paper/code/level2_examples_check.py` (now `../scripts/level2_examples_check.py`);
-`QueensLean/Misses.lean` lists `n = 10, 13, 18` as targets, but only 10 and 13 are proved in Lean (18 is settled by
-the exhaustive enumeration in the scripts, as the paper says).
+## License
 
-## What is proved
-
-| Paper | Lean (file: theorem) |
-|---|---|
-| Proposition 10 (`prop:lower`: conf(p) is never 1; 0 only if gcd(n, 6) = 1; never 2 if 6 divides n) | `OneConflict: Queens.conf_ne_one`, `LowerBound: Lower.polya`, `Lower.conf_ne_two`, `Lower.lower_bound` |
-| Theorem 5, first part (`thm:cycles`: the conflict graph of a solution has no cycle) | `NoCycles: NoCycles.acyclic` (mathlib's `SimpleGraph.IsAcyclic`), `NoCycles.no_closed_set` |
-| Theorem 17 (`thm:golden`: at most (sqrt5 - 1) n/2 conflicts, so at most floor(n/phi)) | `Golden: Golden.golden_ceiling` |
-| Remark 18 (`rem:sharp`: conf(p) <= S(n) = 2 sum_r g(rho_r); C(89) <= 54) | `Ceiling: Ceiling.conf_le_S`, `Ceiling.conf_le_54` |
-| Remark 18, Fibonacci sizes (floor S(F_m) = floor(F_m/phi) - 1 for m = 5 mod 6, slack 0 for m = 1, 3 mod 6), for all m >= 5 | `FibSlack: FibSlack.slack_zero`, `slack_neg`, `floor_S_neg`, `slack_even`; `Ceiling.conf_le_fib` |
-| Theorem 2 (`thm:floor`: the fewest conflicts is exactly f(n) = 0, 2 or 3), with Lemma 12 (`lem:completion`) for every n | `Construct: Construct.floor_exact`; `Construct.floor_reached` in `FloorAll` (Polya's board in `FloorPolya`, the 28 completed Monsky families in `FloorFamilies`, generated by the paper's construction, six concrete boards) |
-| Theorem 3 (`thm:levels`: never 1; never 2 at prime n >= 5; never 3 at n = 2q) | `Levels: Levels.levels` (controls in `LevelsControls`) |
-| Theorem 4 (`thm:layer`: balanced modulo every prime K >= 5 dividing n; every odd K for even n prime to 3) and Example 15 | `Layer: Layer.layer`, `Layer.layer_even`; the 75 example in `LayerControls` |
-| Theorem 5, second part (no cyclic conflict graph for any set of squares with at most two on each wrapped diagonal) | `PointSets: PointSets.acyclic` |
-| Corollary 19, exact values: every size listed except 18 (it rests on the exhaustive enumeration in the scripts) | `Ceilings: Ceilings.C_n` (the paper's sizes, from the stored boards via the checker `BoardCheck`), `CeilingsRouteA: C_76, C_78, C_79, C_81, C_86`; `QueensLeanHeavy/MissC10: Misses.C_10` (C(10) = 5 by an exhaustive search inside Lean, `Misses.go_sound`); `QueensLeanHeavy/MissC13: Misses.C_13` (C(13) = 7, the same search split into four-row prefixes in `Miss13/P_a_b.lean` (132 files), glued by `Misses.go_of`) |
-
-The lower-bound statements hold for every permutation (they do not use the non-attacking condition); the others are
-for n-queens solutions.
-
-## Definitions to compare with the paper
-
-These few lines are what a reader checks by eye; everything else is checked by Lean.
-
-- A solution: `p : Equiv.Perm (Fin n)` (row i holds a queen in column p i) with `Function.Injective (vs p)` and
-  `Function.Injective (vd p)`, where `vs p i = i + p i` and `vd p i = i - p i` in the integers (`Ceiling.lean`).
-- Toroidal conflicts, counted per diagonal family: `Queens.pairs f` counts rows i < j with f i = f j;
-  `sumCls p i = i + p i` and `difCls p i = i - p i` in `ZMod n`; `conf p = pairs (sumCls p) + pairs (difCls p)`
-  (`OneConflict.lean`).
-- `FibSlack.α = (3 - √5)/(2√5)`, `FibSlack.γ = (1 + √5)/(2√5)`, the piecewise `FibSlack.g`,
-  `FibSlack.ρ n r = (n - |2r - (n - 1)|)/n`, `FibSlack.S n = 2 ∑_{r<n} g(ρ n r)`; `goldenRatio` and `Nat.fib` are
-  mathlib's.
-- The conflict graph `NoCycles.conflictGraph p`: rows joined when they share a wrapped sum or difference class.
-
-## Not covered
-
-Proposition 20 and Corollary 21 (products with toroidal solutions), the zero-slack queen kinds
-named in Remark 18, the value of Corollary 19 at 18, the solutions with two conflicts of Remark 23, and
-the distributions of Remark 14 are not in Lean; they are checked by the Python scripts of this folder (`run_all.sh`).
-
-Build note: `MissC13` imports 132 files of about 250-550 s each (about 10 h on one core), each up to 8 GB; `MissC10` needs about 21 GB.
+Apache-2.0 (`LICENSE`).
